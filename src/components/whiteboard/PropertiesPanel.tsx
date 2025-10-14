@@ -1,4 +1,4 @@
-import { Tool, ShapeStyle, StrokeStyle } from "@/pages/Whiteboard";
+import { Tool, ShapeStyle, StrokeStyle } from "@/types/canvas";
 
 interface PropertiesPanelProps {
   activeTool: Tool;

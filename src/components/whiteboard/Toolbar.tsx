@@ -1,5 +1,5 @@
-import { Lock, Hand, Square, Circle, Diamond, ArrowRight, Minus, Type, Pencil, Eraser, Image } from "lucide-react";
-import { Tool } from "@/pages/Whiteboard";
+import { MousePointer2, Hand, Square, Circle, Diamond, ArrowRight, Minus, Type, Pencil, Eraser, Image } from "lucide-react";
+import { Tool } from "@/types/canvas";
 
 interface ToolbarProps {
   activeTool: Tool;
@@ -8,7 +8,7 @@ interface ToolbarProps {
 
 export const Toolbar = ({ activeTool, onToolChange }: ToolbarProps) => {
   const tools: { id: Tool; icon: React.ReactNode; label: string }[] = [
-    { id: "select", icon: <Lock size={18} />, label: "Selection" },
+    { id: "select", icon: <MousePointer2 size={18} />, label: "Selection (V)" },
     { id: "hand", icon: <Hand size={18} />, label: "Hand" },
     { id: "rectangle", icon: <Square size={18} />, label: "Rectangle" },
     { id: "ellipse", icon: <Circle size={18} />, label: "Ellipse" },

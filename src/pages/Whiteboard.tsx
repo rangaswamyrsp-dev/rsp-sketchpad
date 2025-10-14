@@ -1,33 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Toolbar } from "@/components/whiteboard/Toolbar";
 import { Canvas } from "@/components/whiteboard/Canvas";
 import { MenuSidebar } from "@/components/whiteboard/MenuSidebar";
 import { PropertiesPanel } from "@/components/whiteboard/PropertiesPanel";
 import { ZoomControls } from "@/components/whiteboard/ZoomControls";
-
-export type Tool = 
-  | "select"
-  | "hand"
-  | "rectangle"
-  | "ellipse"
-  | "diamond"
-  | "line"
-  | "arrow"
-  | "text"
-  | "pen"
-  | "eraser"
-  | "image";
-
-export type StrokeStyle = "solid" | "dashed" | "dotted";
-
-export interface ShapeStyle {
-  strokeColor: string;
-  backgroundColor: string;
-  strokeWidth: number;
-  strokeStyle: StrokeStyle;
-  sloppiness: number;
-  roundEdges: boolean;
-}
+import { useCanvas } from "@/hooks/useCanvas";
+import { Tool, ShapeStyle } from "@/types/canvas";
+import { toast } from "sonner";
 
 const Whiteboard = () => {
   const [activeTool, setActiveTool] = useState<Tool>("select");
@@ -42,26 +21,107 @@ const Whiteboard = () => {
     roundEdges: false,
   });
 
-  const handleZoomIn = () => {
+  const {
+    shapes,
+    selectedIds,
+    createShape,
+    addShape,
+    updateShape,
+    deleteSelected,
+    selectShape,
+    clearSelection,
+    moveSelected,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useCanvas(shapeStyle);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Undo/Redo
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+        toast.success("Undo");
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+        toast.success("Redo");
+      }
+
+      // Delete
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedIds.length > 0) {
+        e.preventDefault();
+        deleteSelected();
+        toast.success(`Deleted ${selectedIds.length} shape(s)`);
+      }
+
+      // Escape
+      if (e.key === "Escape") {
+        clearSelection();
+        setActiveTool("select");
+      }
+
+      // Tool shortcuts
+      if (e.key === "v") setActiveTool("select");
+      if (e.key === "h") setActiveTool("hand");
+      if (e.key === "r") setActiveTool("rectangle");
+      if (e.key === "o") setActiveTool("ellipse");
+      if (e.key === "d") setActiveTool("diamond");
+      if (e.key === "l") setActiveTool("line");
+      if (e.key === "a") setActiveTool("arrow");
+      if (e.key === "t") setActiveTool("text");
+      if (e.key === "p") setActiveTool("pen");
+
+      // Arrow keys to move selected
+      if (selectedIds.length > 0) {
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          moveSelected(0, e.shiftKey ? -10 : -1);
+        }
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          moveSelected(0, e.shiftKey ? 10 : 1);
+        }
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          moveSelected(e.shiftKey ? -10 : -1, 0);
+        }
+        if (e.key === "ArrowRight") {
+          e.preventDefault();
+          moveSelected(e.shiftKey ? 10 : 1, 0);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undo, redo, deleteSelected, selectedIds, clearSelection, moveSelected]);
+
+  const handleZoomIn = useCallback(() => {
     setZoom((prev) => Math.min(prev + 10, 300));
-  };
+  }, []);
 
-  const handleZoomOut = () => {
+  const handleZoomOut = useCallback(() => {
     setZoom((prev) => Math.max(prev - 10, 10));
-  };
+  }, []);
 
-  const handleResetZoom = () => {
+  const handleResetZoom = useCallback(() => {
     setZoom(100);
-  };
+  }, []);
 
   return (
     <div className="h-screen w-full flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4">
+      <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 relative z-10">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="p-2 hover:bg-muted rounded-lg transition-colors"
+            aria-label="Menu"
           >
             <svg
               width="20"
@@ -81,15 +141,21 @@ const Whiteboard = () => {
           <h1 className="text-lg font-semibold text-foreground">
             RSP Whiteboard
           </h1>
+          <span className="text-xs text-muted-foreground">
+            {shapes.length} shape{shapes.length !== 1 ? "s" : ""}
+          </span>
         </div>
 
         <Toolbar activeTool={activeTool} onToolChange={setActiveTool} />
 
         <div className="flex items-center gap-2">
-          <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity font-medium">
+          <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity font-medium text-sm">
             Share
           </button>
-          <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+          <button 
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            aria-label="Library"
+          >
             <svg
               width="20"
               height="20"
@@ -127,7 +193,19 @@ const Whiteboard = () => {
           onStyleChange={setShapeStyle}
         />
 
-        <Canvas zoom={zoom} activeTool={activeTool} />
+        <Canvas
+          zoom={zoom}
+          activeTool={activeTool}
+          shapes={shapes}
+          selectedIds={selectedIds}
+          currentStyle={shapeStyle}
+          onAddShape={addShape}
+          onSelectShape={selectShape}
+          onClearSelection={clearSelection}
+          onMoveSelected={moveSelected}
+          onUpdateShape={updateShape}
+          onCreateShape={createShape}
+        />
 
         <ZoomControls
           zoom={zoom}
