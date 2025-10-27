@@ -62,24 +62,7 @@ export const Canvas = ({
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw grid
-    ctx.save();
-    ctx.strokeStyle = "hsl(var(--border))";
-    ctx.lineWidth = 1;
-    const gridSize = 20;
-    for (let x = 0; x < canvas.width; x += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, canvas.height);
-      ctx.stroke();
-    }
-    for (let y = 0; y < canvas.height; y += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(canvas.width, y);
-      ctx.stroke();
-    }
-    ctx.restore();
+    // Clean white canvas - no grid
 
     // Apply zoom and offset
     ctx.save();
@@ -155,7 +138,7 @@ export const Canvas = ({
       setPenPoints([point]);
     }
 
-    // Text tool
+    // Text tool - inline editing handled by selected text
     if (activeTool === "text") {
       const textShape = onCreateShape("text", point, { x: point.x + 100, y: point.y + 30 }, currentStyle);
       if (textShape && "text" in textShape) {
@@ -163,6 +146,14 @@ export const Canvas = ({
         if (text) {
           onAddShape({ ...textShape, text });
         }
+      }
+    }
+
+    // Eraser tool
+    if (activeTool === "eraser") {
+      const clickedShape = getShapeAtPoint(point, shapes);
+      if (clickedShape) {
+        onUpdateShape(clickedShape.id, { deleted: true } as any);
       }
     }
   };
@@ -242,7 +233,7 @@ export const Canvas = ({
   };
 
   return (
-    <div className="flex-1 relative overflow-hidden bg-canvas">
+    <div className="flex-1 relative overflow-hidden bg-background">
       <canvas
         ref={canvasRef}
         className={`w-full h-full ${getCursor()}`}
@@ -258,6 +249,7 @@ export const Canvas = ({
         {["rectangle", "ellipse", "diamond"].includes(activeTool) && "Click and drag to draw"}
         {activeTool === "pen" && "Click and drag to draw freehand"}
         {activeTool === "text" && "Click to add text"}
+        {activeTool === "eraser" && "Click shapes to erase"}
         {activeTool === "hand" && "Drag to pan the canvas"}
       </div>
     </div>

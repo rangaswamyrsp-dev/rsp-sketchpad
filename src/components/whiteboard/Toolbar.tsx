@@ -1,4 +1,4 @@
-import { MousePointer2, Hand, Square, Circle, Diamond, ArrowRight, Minus, Type, Pencil, Eraser, Image } from "lucide-react";
+import { MousePointer2, Hand, Square, Circle, Diamond, ArrowRight, Minus, Type, Pencil, Eraser, Image as ImageIcon } from "lucide-react";
 import { Tool } from "@/types/canvas";
 
 interface ToolbarProps {
@@ -15,9 +15,9 @@ export const Toolbar = ({ activeTool, onToolChange }: ToolbarProps) => {
     { id: "diamond", icon: <Diamond size={18} />, label: "Diamond" },
     { id: "arrow", icon: <ArrowRight size={18} />, label: "Arrow" },
     { id: "line", icon: <Minus size={18} />, label: "Line" },
-    { id: "pen", icon: <Pencil size={18} />, label: "Draw" },
+    { id: "pen", icon: <Pencil size={18} />, label: "Pen" },
     { id: "text", icon: <Type size={18} />, label: "Text" },
-    { id: "image", icon: <Image size={18} />, label: "Image" },
+    { id: "image", icon: <ImageIcon size={18} />, label: "Image" },
     { id: "eraser", icon: <Eraser size={18} />, label: "Eraser" },
   ];
 

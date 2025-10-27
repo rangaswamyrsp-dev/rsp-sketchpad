@@ -1,13 +1,23 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Shape, Point, ShapeStyle, Tool } from "@/types/canvas";
 import { v4 as uuidv4 } from "uuid";
 
+const STORAGE_KEY = "rsp-whiteboard-shapes";
+
 export const useCanvas = (initialStyle: ShapeStyle) => {
-  const [shapes, setShapes] = useState<Shape[]>([]);
+  const [shapes, setShapes] = useState<Shape[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
+  });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [history, setHistory] = useState<Shape[][]>([[]]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const historyRef = useRef({ shapes: [], index: 0 });
+
+  // Save to localStorage whenever shapes change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(shapes));
+  }, [shapes]);
 
   const addToHistory = useCallback((newShapes: Shape[]) => {
     const newHistory = history.slice(0, historyIndex + 1);
@@ -153,6 +163,14 @@ export const useCanvas = (initialStyle: ShapeStyle) => {
     return shapes.filter(shape => selectedIds.includes(shape.id));
   }, [shapes, selectedIds]);
 
+  const resetCanvas = useCallback(() => {
+    setShapes([]);
+    setSelectedIds([]);
+    setHistory([[]]);
+    setHistoryIndex(0);
+    localStorage.removeItem(STORAGE_KEY);
+  }, []);
+
   return {
     shapes,
     selectedIds,
@@ -166,6 +184,7 @@ export const useCanvas = (initialStyle: ShapeStyle) => {
     getSelectedShapes,
     undo,
     redo,
+    resetCanvas,
     canUndo: historyIndex > 0,
     canRedo: historyIndex < history.length - 1,
   };

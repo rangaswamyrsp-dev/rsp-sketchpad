@@ -33,6 +33,7 @@ const Whiteboard = () => {
     moveSelected,
     undo,
     redo,
+    resetCanvas,
     canUndo,
     canRedo,
   } = useCanvas(shapeStyle);
@@ -185,7 +186,16 @@ const Whiteboard = () => {
 
       {/* Main content */}
       <div className="flex-1 flex relative">
-        <MenuSidebar isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+        <MenuSidebar 
+          isOpen={isMenuOpen} 
+          onClose={() => setIsMenuOpen(false)}
+          onResetCanvas={() => {
+            if (window.confirm("Are you sure you want to reset the canvas? This will delete all shapes.")) {
+              resetCanvas();
+              toast.success("Canvas reset");
+            }
+          }}
+        />
         
         <PropertiesPanel
           activeTool={activeTool}

@@ -3,9 +3,10 @@ import { FolderOpen, Save, Download, Users, Search, HelpCircle, Trash2, Github, 
 interface MenuSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  onResetCanvas: () => void;
 }
 
-export const MenuSidebar = ({ isOpen, onClose }: MenuSidebarProps) => {
+export const MenuSidebar = ({ isOpen, onClose, onResetCanvas }: MenuSidebarProps) => {
   const menuItems = [
     { icon: <FolderOpen size={18} />, label: "Open", shortcut: "Ctrl+O" },
     { icon: <Save size={18} />, label: "Save to...", shortcut: "" },
@@ -84,6 +85,7 @@ export const MenuSidebar = ({ isOpen, onClose }: MenuSidebarProps) => {
             {bottomItems.map((item) => (
               <button
                 key={item.label}
+                onClick={item.label === "Reset the canvas" ? onResetCanvas : undefined}
                 className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted transition-colors text-left group"
               >
                 <div className="flex items-center gap-3">
