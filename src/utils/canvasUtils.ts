@@ -1,11 +1,17 @@
 import { Shape, Point } from "@/types/canvas";
 
+// Store loaded images to avoid reloading
+const imageCache: Map<string, HTMLImageElement> = new Map();
+
 export const drawShape = (
   ctx: CanvasRenderingContext2D,
   shape: Shape,
   isSelected: boolean = false
 ) => {
   ctx.save();
+  
+  // Apply opacity
+  ctx.globalAlpha = shape.style.opacity;
 
   // Apply rotation
   if (shape.rotation !== 0) {
@@ -110,11 +116,27 @@ export const drawShape = (
     case "pen":
       if ("points" in shape && shape.points.length > 1) {
         ctx.beginPath();
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
         ctx.moveTo(shape.points[0].x, shape.points[0].y);
         for (let i = 1; i < shape.points.length; i++) {
           ctx.lineTo(shape.points[i].x, shape.points[i].y);
         }
         ctx.stroke();
+      }
+      break;
+
+    case "image":
+      if ("src" in shape && shape.src) {
+        let img = imageCache.get(shape.src);
+        if (!img) {
+          img = new Image();
+          img.src = shape.src;
+          imageCache.set(shape.src, img);
+        }
+        if (img.complete) {
+          ctx.drawImage(img, shape.x, shape.y, shape.width, shape.height);
+        }
       }
       break;
   }

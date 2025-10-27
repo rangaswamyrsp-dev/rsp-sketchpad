@@ -12,6 +12,7 @@ const Whiteboard = () => {
   const [activeTool, setActiveTool] = useState<Tool>("select");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [zoom, setZoom] = useState(100);
+  const [eraserSize, setEraserSize] = useState(20);
   const [shapeStyle, setShapeStyle] = useState<ShapeStyle>({
     strokeColor: "#1e1e1e",
     backgroundColor: "transparent",
@@ -19,6 +20,7 @@ const Whiteboard = () => {
     strokeStyle: "solid",
     sloppiness: 0,
     roundEdges: false,
+    opacity: 1,
   });
 
   const {
@@ -31,6 +33,7 @@ const Whiteboard = () => {
     selectShape,
     clearSelection,
     moveSelected,
+    getSelectedShapes,
     undo,
     redo,
     resetCanvas,
@@ -199,8 +202,9 @@ const Whiteboard = () => {
         
         <PropertiesPanel
           activeTool={activeTool}
-          style={shapeStyle}
-          onStyleChange={setShapeStyle}
+          currentStyle={shapeStyle}
+          selectedShapes={getSelectedShapes()}
+          onStyleChange={(updates) => setShapeStyle({ ...shapeStyle, ...updates })}
         />
 
         <Canvas
@@ -209,12 +213,14 @@ const Whiteboard = () => {
           shapes={shapes}
           selectedIds={selectedIds}
           currentStyle={shapeStyle}
+          eraserSize={eraserSize}
           onAddShape={addShape}
           onSelectShape={selectShape}
           onClearSelection={clearSelection}
           onMoveSelected={moveSelected}
           onUpdateShape={updateShape}
           onCreateShape={createShape}
+          onEraserSizeChange={setEraserSize}
         />
 
         <ZoomControls

@@ -25,6 +25,7 @@ export interface ShapeStyle {
   strokeStyle: StrokeStyle;
   sloppiness: number;
   roundEdges: boolean;
+  opacity: number;
 }
 
 export interface BaseShape {
@@ -73,6 +74,11 @@ export interface PenShape extends BaseShape {
   points: Point[];
 }
 
+export interface ImageShape extends BaseShape {
+  type: "image";
+  src: string;
+}
+
 export type Shape = 
   | RectangleShape 
   | EllipseShape 
@@ -80,7 +86,8 @@ export type Shape =
   | LineShape 
   | ArrowShape
   | TextShape 
-  | PenShape;
+  | PenShape
+  | ImageShape;
 
 export interface CanvasState {
   shapes: Shape[];

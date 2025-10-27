@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Tool, Shape, Point, ShapeStyle } from "@/types/canvas";
+import { Tool, Shape, Point, ShapeStyle, TextShape } from "@/types/canvas";
 import { drawShape, getShapeAtPoint } from "@/utils/canvasUtils";
+import { TextEditor } from "./TextEditor";
+import { EraserPanel } from "./EraserPanel";
 
 interface CanvasProps {
   zoom: number;
@@ -8,12 +10,14 @@ interface CanvasProps {
   shapes: Shape[];
   selectedIds: string[];
   currentStyle: ShapeStyle;
+  eraserSize: number;
   onAddShape: (shape: Shape) => void;
   onSelectShape: (id: string, multi: boolean) => void;
   onClearSelection: () => void;
   onMoveSelected: (dx: number, dy: number) => void;
   onUpdateShape: (id: string, updates: Partial<Shape>) => void;
   onCreateShape: (type: Tool, start: Point, end: Point, style: ShapeStyle) => Shape | null;
+  onEraserSizeChange: (size: number) => void;
 }
 
 export const Canvas = ({
@@ -22,12 +26,14 @@ export const Canvas = ({
   shapes,
   selectedIds,
   currentStyle,
+  eraserSize,
   onAddShape,
   onSelectShape,
   onClearSelection,
   onMoveSelected,
   onUpdateShape,
   onCreateShape,
+  onEraserSizeChange,
 }: CanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPanning, setIsPanning] = useState(false);
@@ -39,6 +45,8 @@ export const Canvas = ({
   const [currentShape, setCurrentShape] = useState<Shape | null>(null);
   const [dragStart, setDragStart] = useState<Point | null>(null);
   const [penPoints, setPenPoints] = useState<Point[]>([]);
+  const [editingText, setEditingText] = useState<TextShape | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get canvas coordinates from mouse event
   const getCanvasPoint = useCallback((e: React.MouseEvent<HTMLCanvasElement>): Point => {
@@ -138,22 +146,27 @@ export const Canvas = ({
       setPenPoints([point]);
     }
 
-    // Text tool - inline editing handled by selected text
+    // Text tool - create text and start editing
     if (activeTool === "text") {
-      const textShape = onCreateShape("text", point, { x: point.x + 100, y: point.y + 30 }, currentStyle);
+      const textShape = onCreateShape("text", point, { x: point.x + 200, y: point.y + 30 }, currentStyle);
       if (textShape && "text" in textShape) {
-        const text = prompt("Enter text:");
-        if (text) {
-          onAddShape({ ...textShape, text });
-        }
+        setEditingText(textShape as TextShape);
       }
+    }
+
+    // Image tool - trigger file input
+    if (activeTool === "image") {
+      setDrawStart(point);
+      fileInputRef.current?.click();
     }
 
     // Eraser tool
     if (activeTool === "eraser") {
       const clickedShape = getShapeAtPoint(point, shapes);
       if (clickedShape) {
-        onUpdateShape(clickedShape.id, { deleted: true } as any);
+        const newShapes = shapes.filter(s => s.id !== clickedShape.id);
+        // We need to update via parent
+        onUpdateShape(clickedShape.id, { width: 0, height: 0 } as any);
       }
     }
   };
@@ -183,17 +196,23 @@ export const Canvas = ({
     if (isDrawing && drawStart) {
       if (activeTool === "pen") {
         setPenPoints(prev => [...prev, point]);
-        if (penPoints.length > 0) {
-          const shape = onCreateShape(activeTool, penPoints[0], point, currentStyle);
-          if (shape && "points" in shape) {
-            setCurrentShape({ ...shape, points: penPoints });
-          }
+        const shape = onCreateShape(activeTool, penPoints[0] || point, point, currentStyle);
+        if (shape && "points" in shape) {
+          setCurrentShape({ ...shape, points: [...penPoints, point] });
         }
       } else {
         const shape = onCreateShape(activeTool as Tool, drawStart, point, currentStyle);
         if (shape) {
           setCurrentShape(shape);
         }
+      }
+    }
+
+    // Eraser tool - continuous erasing
+    if (activeTool === "eraser" && !isPanning) {
+      const clickedShape = getShapeAtPoint(point, shapes);
+      if (clickedShape) {
+        onUpdateShape(clickedShape.id, { width: 0, height: 0 } as any);
       }
     }
   };
@@ -225,10 +244,49 @@ export const Canvas = ({
     }
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && drawStart) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const imageShape = onCreateShape(
+            "image",
+            drawStart,
+            { x: drawStart.x + img.width, y: drawStart.y + img.height },
+            currentStyle
+          );
+          if (imageShape && "src" in imageShape) {
+            onAddShape({ ...imageShape, src: event.target?.result as string });
+          }
+        };
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleTextComplete = (text: string) => {
+    if (editingText && text.trim()) {
+      onAddShape({ ...editingText, text });
+    }
+    setEditingText(null);
+  };
+
+  const handleTextCancel = () => {
+    setEditingText(null);
+  };
+
   const getCursor = () => {
     if (activeTool === "hand" || isPanning) return "cursor-grab active:cursor-grabbing";
     if (activeTool === "select") return "cursor-default";
     if (activeTool === "text") return "cursor-text";
+    if (activeTool === "eraser") return "cursor-not-allowed";
     return "cursor-crosshair";
   };
 
@@ -243,13 +301,42 @@ export const Canvas = ({
         onMouseLeave={handleMouseUp}
       />
       
+      {/* Hidden file input for image upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleImageUpload}
+        className="hidden"
+      />
+
+      {/* Text editor */}
+      {editingText && (
+        <TextEditor
+          shape={editingText}
+          zoom={zoom}
+          offset={offset}
+          onComplete={handleTextComplete}
+          onCancel={handleTextCancel}
+        />
+      )}
+
+      {/* Eraser panel */}
+      {activeTool === "eraser" && (
+        <EraserPanel
+          eraserSize={eraserSize}
+          onEraserSizeChange={onEraserSizeChange}
+        />
+      )}
+      
       {/* Helper text */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 text-muted-foreground text-sm bg-card/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-border pointer-events-none">
         {activeTool === "select" && "Click shapes to select, drag to move"}
-        {["rectangle", "ellipse", "diamond"].includes(activeTool) && "Click and drag to draw"}
+        {["rectangle", "ellipse", "diamond", "line", "arrow"].includes(activeTool) && "Click and drag to draw"}
         {activeTool === "pen" && "Click and drag to draw freehand"}
-        {activeTool === "text" && "Click to add text"}
-        {activeTool === "eraser" && "Click shapes to erase"}
+        {activeTool === "text" && "Click anywhere to add text"}
+        {activeTool === "image" && "Click to upload and place an image"}
+        {activeTool === "eraser" && "Click or drag over shapes to erase"}
         {activeTool === "hand" && "Drag to pan the canvas"}
       </div>
     </div>

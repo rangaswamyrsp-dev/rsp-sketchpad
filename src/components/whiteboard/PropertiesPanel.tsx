@@ -1,257 +1,275 @@
-import { Tool, ShapeStyle, StrokeStyle } from "@/types/canvas";
+import { Tool, ShapeStyle, Shape } from "@/types/canvas";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 
 interface PropertiesPanelProps {
   activeTool: Tool;
-  style: ShapeStyle;
-  onStyleChange: (style: ShapeStyle) => void;
+  currentStyle: ShapeStyle;
+  selectedShapes: Shape[];
+  onStyleChange: (style: Partial<ShapeStyle>) => void;
 }
 
-export const PropertiesPanel = ({
-  activeTool,
-  style,
-  onStyleChange,
-}: PropertiesPanelProps) => {
-  const showPanel = ["rectangle", "ellipse", "diamond", "line", "arrow", "pen"].includes(
-    activeTool
-  );
+export const PropertiesPanel = ({ activeTool, currentStyle, selectedShapes, onStyleChange }: PropertiesPanelProps) => {
+  const selectedShape = selectedShapes.length === 1 ? selectedShapes[0] : null;
+  const isTextSelected = selectedShape?.type === "text";
+  
+  const showStrokeColor = !["select", "hand", "eraser"].includes(activeTool) || isTextSelected;
+  const showBackgroundColor = ["rectangle", "ellipse", "diamond"].includes(activeTool);
+  const showStrokeWidth = !["select", "hand", "text", "eraser"].includes(activeTool);
+  const showStrokeStyle = !["select", "hand", "text", "eraser", "pen"].includes(activeTool);
+  const showSloppiness = !["select", "hand", "text", "eraser", "image"].includes(activeTool);
+  const showRoundEdges = activeTool === "rectangle";
+  const showTextOptions = activeTool === "text" || isTextSelected;
+  const showOpacity = !["select", "hand", "eraser"].includes(activeTool);
+
+  const showPanel = showStrokeColor || showBackgroundColor || showStrokeWidth || showTextOptions;
 
   if (!showPanel) return null;
 
-  const strokeColors = [
-    { color: "#1e1e1e", label: "Black" },
-    { color: "#e03131", label: "Red" },
-    { color: "#2f9e44", label: "Green" },
-    { color: "#1971c2", label: "Blue" },
-    { color: "#f08c00", label: "Orange" },
+  const colors = [
+    { value: "#1e1e1e", label: "Black" },
+    { value: "#e03131", label: "Red" },
+    { value: "#2f9e44", label: "Green" },
+    { value: "#1971c2", label: "Blue" },
+    { value: "#f08c00", label: "Orange" },
+    { value: "#e64980", label: "Pink" },
   ];
 
-  const backgroundColors = [
-    { color: "transparent", label: "Transparent" },
-    { color: "#ffc9c9", label: "Light Red" },
-    { color: "#b2f2bb", label: "Light Green" },
-    { color: "#a5d8ff", label: "Light Blue" },
-    { color: "#ffe066", label: "Light Yellow" },
-  ];
-
-  const strokeWidths = [
-    { value: 1, label: "Thin" },
-    { value: 2, label: "Medium" },
-    { value: 3, label: "Bold" },
-  ];
-
-  const strokeStyles: { value: StrokeStyle; label: string }[] = [
-    { value: "solid", label: "Solid" },
-    { value: "dashed", label: "Dashed" },
-    { value: "dotted", label: "Dotted" },
-  ];
+  const fontFamilies = ["Arial", "Helvetica", "Times New Roman", "Courier New", "Georgia"];
+  const fontSizes = [12, 16, 20, 24, 32, 48];
 
   return (
     <div className="w-60 border-r border-border bg-panel-bg overflow-y-auto">
-      <div className="p-4 space-y-6">
-        {/* Stroke Color */}
-        <div>
-          <label className="text-sm font-medium text-foreground mb-2 block">
-            Stroke
-          </label>
-          <div className="flex gap-2">
-            {strokeColors.map((c) => (
-              <button
-                key={c.color}
-                onClick={() => onStyleChange({ ...style, strokeColor: c.color })}
-                className={`w-8 h-8 rounded border-2 transition-all ${
-                  style.strokeColor === c.color
-                    ? "border-primary scale-110"
-                    : "border-border hover:scale-105"
-                }`}
-                style={{ backgroundColor: c.color }}
-                title={c.label}
-              />
-            ))}
-            <button
-              className="w-8 h-8 rounded border-2 border-border hover:scale-105 bg-card flex items-center justify-center text-muted-foreground"
-              title="Custom color"
-            >
-              <input
-                type="color"
-                value={style.strokeColor}
-                onChange={(e) =>
-                  onStyleChange({ ...style, strokeColor: e.target.value })
-                }
-                className="w-full h-full opacity-0 cursor-pointer"
-              />
-              <span className="absolute pointer-events-none">+</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Background */}
-        {activeTool !== "line" && activeTool !== "arrow" && (
+      <div className="p-4 space-y-4">
+        {showStrokeColor && (
           <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Background
+            <label className="text-xs text-muted-foreground mb-2 block">
+              {showTextOptions ? "Text Color" : "Stroke Color"}
             </label>
-            <div className="flex gap-2">
-              {backgroundColors.map((c) => (
+            <div className="flex gap-2 flex-wrap">
+              {colors.map((c) => (
                 <button
-                  key={c.color}
-                  onClick={() =>
-                    onStyleChange({ ...style, backgroundColor: c.color })
-                  }
-                  className={`w-8 h-8 rounded border-2 transition-all ${
-                    style.backgroundColor === c.color
+                  key={c.value}
+                  onClick={() => onStyleChange({ strokeColor: c.value })}
+                  className={`w-7 h-7 rounded border-2 transition-all ${
+                    currentStyle.strokeColor === c.value
                       ? "border-primary scale-110"
                       : "border-border hover:scale-105"
                   }`}
-                  style={{
-                    backgroundColor: c.color === "transparent" ? "#fff" : c.color,
-                  }}
+                  style={{ backgroundColor: c.value }}
                   title={c.label}
-                >
-                  {c.color === "transparent" && (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="w-4 h-0.5 bg-red-500 rotate-45" />
-                    </div>
-                  )}
-                </button>
-              ))}
-              <button
-                className="w-8 h-8 rounded border-2 border-border hover:scale-105 bg-card flex items-center justify-center text-muted-foreground relative"
-                title="Custom color"
-              >
-                <input
-                  type="color"
-                  value={
-                    style.backgroundColor === "transparent"
-                      ? "#ffffff"
-                      : style.backgroundColor
-                  }
-                  onChange={(e) =>
-                    onStyleChange({ ...style, backgroundColor: e.target.value })
-                  }
-                  className="w-full h-full opacity-0 cursor-pointer"
                 />
-                <span className="absolute pointer-events-none">+</span>
-              </button>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Stroke width */}
-        <div>
-          <label className="text-sm font-medium text-foreground mb-2 block">
-            Stroke width
-          </label>
-          <div className="flex gap-2">
-            {strokeWidths.map((w) => (
-              <button
-                key={w.value}
-                onClick={() => onStyleChange({ ...style, strokeWidth: w.value })}
-                className={`flex-1 px-3 py-2 rounded border transition-all ${
-                  style.strokeWidth === w.value
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:bg-muted"
-                }`}
-              >
-                <div
-                  className="w-full bg-foreground rounded"
-                  style={{ height: `${w.value * 2}px` }}
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Stroke style */}
-        <div>
-          <label className="text-sm font-medium text-foreground mb-2 block">
-            Stroke style
-          </label>
-          <div className="flex gap-2">
-            {strokeStyles.map((s) => (
-              <button
-                key={s.value}
-                onClick={() => onStyleChange({ ...style, strokeStyle: s.value })}
-                className={`flex-1 px-3 py-3 rounded border transition-all ${
-                  style.strokeStyle === s.value
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:bg-muted"
-                }`}
-                title={s.label}
-              >
-                <div className="w-full h-0.5 bg-foreground" />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Sloppiness */}
-        <div>
-          <label className="text-sm font-medium text-foreground mb-2 block">
-            Sloppiness
-          </label>
-          <div className="flex gap-2">
-            {[0, 1, 2].map((level) => (
-              <button
-                key={level}
-                onClick={() => onStyleChange({ ...style, sloppiness: level })}
-                className={`flex-1 px-3 py-3 rounded border transition-all ${
-                  style.sloppiness === level
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:bg-muted"
-                }`}
-              >
-                <svg
-                  width="100%"
-                  height="20"
-                  viewBox="0 0 50 20"
-                  className="text-foreground"
-                >
-                  <path
-                    d={
-                      level === 0
-                        ? "M 5 10 L 45 10"
-                        : level === 1
-                        ? "M 5 10 Q 15 8, 25 10 T 45 10"
-                        : "M 5 10 Q 12 6, 18 11 Q 25 15, 32 9 Q 39 5, 45 10"
-                    }
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    fill="none"
-                  />
-                </svg>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Edges */}
-        {activeTool === "rectangle" && (
+        {showBackgroundColor && (
           <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Edges
-            </label>
-            <div className="flex gap-2">
+            <label className="text-xs text-muted-foreground mb-2 block">Background</label>
+            <div className="flex gap-2 flex-wrap">
               <button
-                onClick={() => onStyleChange({ ...style, roundEdges: false })}
-                className={`flex-1 px-3 py-3 rounded border transition-all ${
-                  !style.roundEdges
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:bg-muted"
+                onClick={() => onStyleChange({ backgroundColor: "transparent" })}
+                className={`w-7 h-7 rounded border-2 transition-all ${
+                  currentStyle.backgroundColor === "transparent"
+                    ? "border-primary scale-110"
+                    : "border-border hover:scale-105"
                 }`}
+                style={{ backgroundColor: "#fff" }}
+                title="Transparent"
               >
-                <div className="w-full h-8 border-2 border-foreground" />
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-4 h-0.5 bg-red-500 rotate-45" />
+                </div>
               </button>
-              <button
-                onClick={() => onStyleChange({ ...style, roundEdges: true })}
-                className={`flex-1 px-3 py-3 rounded border transition-all ${
-                  style.roundEdges
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:bg-muted"
-                }`}
-              >
-                <div className="w-full h-8 border-2 border-foreground rounded-lg" />
-              </button>
+              {colors.map((c) => (
+                <button
+                  key={c.value}
+                  onClick={() => onStyleChange({ backgroundColor: c.value })}
+                  className={`w-7 h-7 rounded border-2 transition-all ${
+                    currentStyle.backgroundColor === c.value
+                      ? "border-primary scale-110"
+                      : "border-border hover:scale-105"
+                  }`}
+                  style={{ backgroundColor: c.value }}
+                  title={c.label}
+                />
+              ))}
             </div>
+          </div>
+        )}
+
+        {showStrokeWidth && (
+          <div>
+            <label className="text-xs text-muted-foreground mb-2 block">
+              Stroke Width: {currentStyle.strokeWidth}px
+            </label>
+            <Slider
+              value={[currentStyle.strokeWidth]}
+              onValueChange={(value) => onStyleChange({ strokeWidth: value[0] })}
+              min={1}
+              max={10}
+              step={1}
+              className="w-full"
+            />
+          </div>
+        )}
+
+        {showStrokeStyle && (
+          <div>
+            <label className="text-xs text-muted-foreground mb-2 block">Stroke Style</label>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant={currentStyle.strokeStyle === "solid" ? "default" : "outline"}
+                onClick={() => onStyleChange({ strokeStyle: "solid" })}
+                className="flex-1"
+              >
+                Solid
+              </Button>
+              <Button
+                size="sm"
+                variant={currentStyle.strokeStyle === "dashed" ? "default" : "outline"}
+                onClick={() => onStyleChange({ strokeStyle: "dashed" })}
+                className="flex-1"
+              >
+                Dash
+              </Button>
+              <Button
+                size="sm"
+                variant={currentStyle.strokeStyle === "dotted" ? "default" : "outline"}
+                onClick={() => onStyleChange({ strokeStyle: "dotted" })}
+                className="flex-1"
+              >
+                Dot
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {showSloppiness && (
+          <div>
+            <label className="text-xs text-muted-foreground mb-2 block">
+              Sloppiness: {currentStyle.sloppiness}
+            </label>
+            <Slider
+              value={[currentStyle.sloppiness]}
+              onValueChange={(value) => onStyleChange({ sloppiness: value[0] })}
+              min={0}
+              max={3}
+              step={1}
+              className="w-full"
+            />
+          </div>
+        )}
+
+        {showRoundEdges && (
+          <div>
+            <label className="text-xs text-muted-foreground mb-2 block">Edges</label>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant={currentStyle.roundEdges ? "default" : "outline"}
+                onClick={() => onStyleChange({ roundEdges: true })}
+                className="flex-1"
+              >
+                Round
+              </Button>
+              <Button
+                size="sm"
+                variant={!currentStyle.roundEdges ? "default" : "outline"}
+                onClick={() => onStyleChange({ roundEdges: false })}
+                className="flex-1"
+              >
+                Sharp
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {showTextOptions && (
+          <>
+            <div>
+              <label className="text-xs text-muted-foreground mb-2 block">Font Family</label>
+              <div className="grid grid-cols-2 gap-2">
+                {fontFamilies.map((font) => (
+                  <Button
+                    key={font}
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onStyleChange({ fontFamily: font } as any)}
+                    className="text-xs truncate"
+                    style={{ fontFamily: font }}
+                  >
+                    {font.split(" ")[0]}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-2 block">Font Size</label>
+              <div className="grid grid-cols-3 gap-2">
+                {fontSizes.map((size) => (
+                  <Button
+                    key={size}
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onStyleChange({ fontSize: size } as any)}
+                    className="text-xs"
+                  >
+                    {size}px
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-2 block">Text Align</label>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onStyleChange({ textAlign: "left" } as any)}
+                  className="flex-1"
+                >
+                  <AlignLeft size={16} />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onStyleChange({ textAlign: "center" } as any)}
+                  className="flex-1"
+                >
+                  <AlignCenter size={16} />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onStyleChange({ textAlign: "right" } as any)}
+                  className="flex-1"
+                >
+                  <AlignRight size={16} />
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {showOpacity && (
+          <div>
+            <label className="text-xs text-muted-foreground mb-2 block">
+              Opacity: {Math.round(currentStyle.opacity * 100)}%
+            </label>
+            <Slider
+              value={[currentStyle.opacity * 100]}
+              onValueChange={(value) => onStyleChange({ opacity: value[0] / 100 })}
+              min={0}
+              max={100}
+              step={1}
+              className="w-full"
+            />
           </div>
         )}
       </div>

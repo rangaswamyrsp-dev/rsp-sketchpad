@@ -106,6 +106,12 @@ export const useCanvas = (initialStyle: ShapeStyle) => {
           type: "pen",
           points: [start],
         };
+      case "image":
+        return {
+          ...baseShape,
+          type: "image",
+          src: "",
+        };
       default:
         return null;
     }
@@ -129,6 +135,7 @@ export const useCanvas = (initialStyle: ShapeStyle) => {
   }, [shapes, addToHistory]);
 
   const deleteSelected = useCallback(() => {
+    if (selectedIds.length === 0) return;
     const newShapes = shapes.filter(shape => !selectedIds.includes(shape.id));
     setShapes(newShapes);
     setSelectedIds([]);
