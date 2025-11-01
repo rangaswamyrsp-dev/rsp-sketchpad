@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Toolbar } from "@/components/whiteboard/Toolbar";
 import { Canvas } from "@/components/whiteboard/Canvas";
 import { MenuSidebar } from "@/components/whiteboard/MenuSidebar";
@@ -117,6 +117,76 @@ const Whiteboard = () => {
     setZoom(100);
   }, []);
 
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const handleExportPNG = useCallback(() => {
+    const canvas = document.querySelector('canvas');
+    if (!canvas) return;
+    
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `whiteboard-${Date.now()}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Exported as PNG");
+    });
+  }, []);
+
+  const handleExportJPEG = useCallback(() => {
+    const canvas = document.querySelector('canvas');
+    if (!canvas) return;
+    
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `whiteboard-${Date.now()}.jpeg`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Exported as JPEG");
+    }, 'image/jpeg', 0.95);
+  }, []);
+
+  const handleExportJSON = useCallback(() => {
+    const data = JSON.stringify(shapes, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `whiteboard-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Saved as JSON");
+  }, [shapes]);
+
+  const handleLoadJSON = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const loadedShapes = JSON.parse(event.target?.result as string);
+          localStorage.setItem('rsp-whiteboard-shapes', JSON.stringify(loadedShapes));
+          window.location.reload();
+          toast.success("Canvas loaded");
+        } catch (error) {
+          toast.error("Failed to load canvas");
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }, []);
+
   return (
     <div className="h-screen w-full flex flex-col bg-background overflow-hidden">
       {/* Header */}
@@ -198,6 +268,10 @@ const Whiteboard = () => {
               toast.success("Canvas reset");
             }
           }}
+          onExportPNG={handleExportPNG}
+          onExportJPEG={handleExportJPEG}
+          onExportJSON={handleExportJSON}
+          onLoadJSON={handleLoadJSON}
         />
         
         <PropertiesPanel

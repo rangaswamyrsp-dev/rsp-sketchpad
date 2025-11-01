@@ -143,6 +143,7 @@ export const Canvas = ({
     // Pen tool
     if (activeTool === "pen") {
       setIsDrawing(true);
+      setDrawStart(point);
       setPenPoints([point]);
     }
 
@@ -251,10 +252,25 @@ export const Canvas = ({
       reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
+          // Default to smaller size (max 300px width/height)
+          const maxSize = 300;
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > maxSize || height > maxSize) {
+            if (width > height) {
+              height = (height / width) * maxSize;
+              width = maxSize;
+            } else {
+              width = (width / height) * maxSize;
+              height = maxSize;
+            }
+          }
+          
           const imageShape = onCreateShape(
             "image",
             drawStart,
-            { x: drawStart.x + img.width, y: drawStart.y + img.height },
+            { x: drawStart.x + width, y: drawStart.y + height },
             currentStyle
           );
           if (imageShape && "src" in imageShape) {
