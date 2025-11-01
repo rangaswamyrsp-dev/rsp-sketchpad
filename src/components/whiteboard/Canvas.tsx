@@ -163,10 +163,9 @@ export const Canvas = ({
 
     // Eraser tool
     if (activeTool === "eraser") {
+      setIsDrawing(true);
       const clickedShape = getShapeAtPoint(point, shapes);
       if (clickedShape) {
-        const newShapes = shapes.filter(s => s.id !== clickedShape.id);
-        // We need to update via parent
         onUpdateShape(clickedShape.id, { width: 0, height: 0 } as any);
       }
     }
@@ -210,7 +209,7 @@ export const Canvas = ({
     }
 
     // Eraser tool - continuous erasing
-    if (activeTool === "eraser" && !isPanning) {
+    if (activeTool === "eraser" && isDrawing && !isPanning) {
       const clickedShape = getShapeAtPoint(point, shapes);
       if (clickedShape) {
         onUpdateShape(clickedShape.id, { width: 0, height: 0 } as any);
@@ -242,6 +241,11 @@ export const Canvas = ({
       setDrawStart(null);
       setCurrentShape(null);
       setPenPoints([]);
+    }
+    
+    // End eraser
+    if (isDrawing && activeTool === "eraser") {
+      setIsDrawing(false);
     }
   };
 
