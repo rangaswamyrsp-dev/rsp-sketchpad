@@ -36,7 +36,7 @@ export const MenuSidebar = ({ isOpen, onClose, onResetCanvas, onExportPNG, onExp
       />
 
       {/* Sidebar */}
-      <div className="fixed left-0 top-14 bottom-0 w-64 bg-white dark:bg-sidebar-bg border-r border-border z-50 flex flex-col">
+      <div className="fixed left-0 top-14 bottom-0 w-64 bg-gray-50 dark:bg-sidebar-bg border-r border-border z-50 flex flex-col">
         <div className="flex-1 overflow-y-auto p-2">
           {/* Main menu items */}
           <div className="space-y-1 mb-4">

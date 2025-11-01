@@ -7,10 +7,21 @@ import { ZoomControls } from "@/components/whiteboard/ZoomControls";
 import { useCanvas } from "@/hooks/useCanvas";
 import { Tool, ShapeStyle } from "@/types/canvas";
 import { toast } from "sonner";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Whiteboard = () => {
   const [activeTool, setActiveTool] = useState<Tool>("select");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
   const [zoom, setZoom] = useState(100);
   const [eraserSize, setEraserSize] = useState(20);
   const [shapeStyle, setShapeStyle] = useState<ShapeStyle>({
@@ -262,12 +273,7 @@ const Whiteboard = () => {
         <MenuSidebar 
           isOpen={isMenuOpen} 
           onClose={() => setIsMenuOpen(false)}
-          onResetCanvas={() => {
-            if (window.confirm("Are you sure you want to reset the canvas? This will delete all shapes.")) {
-              resetCanvas();
-              toast.success("Canvas reset");
-            }
-          }}
+          onResetCanvas={() => setShowResetDialog(true)}
           onExportPNG={handleExportPNG}
           onExportJPEG={handleExportJPEG}
           onExportJSON={handleExportJSON}
@@ -304,6 +310,31 @@ const Whiteboard = () => {
           onResetZoom={handleResetZoom}
         />
       </div>
+
+      {/* Reset canvas confirmation dialog */}
+      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear canvas</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will clear the whole canvas. Are you sure?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                resetCanvas();
+                toast.success("Canvas reset");
+                setShowResetDialog(false);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

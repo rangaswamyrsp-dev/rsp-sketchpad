@@ -252,3 +252,32 @@ export const getShapeAtPoint = (
   }
   return null;
 };
+
+export const getResizeHandle = (
+  point: Point,
+  shape: Shape
+): string | null => {
+  const handleSize = 8;
+  const handles = [
+    { name: "nw", x: shape.x, y: shape.y },
+    { name: "n", x: shape.x + shape.width / 2, y: shape.y },
+    { name: "ne", x: shape.x + shape.width, y: shape.y },
+    { name: "e", x: shape.x + shape.width, y: shape.y + shape.height / 2 },
+    { name: "se", x: shape.x + shape.width, y: shape.y + shape.height },
+    { name: "s", x: shape.x + shape.width / 2, y: shape.y + shape.height },
+    { name: "sw", x: shape.x, y: shape.y + shape.height },
+    { name: "w", x: shape.x, y: shape.y + shape.height / 2 },
+  ];
+
+  for (const handle of handles) {
+    if (
+      point.x >= handle.x - handleSize &&
+      point.x <= handle.x + handleSize &&
+      point.y >= handle.y - handleSize &&
+      point.y <= handle.y + handleSize
+    ) {
+      return handle.name;
+    }
+  }
+  return null;
+};

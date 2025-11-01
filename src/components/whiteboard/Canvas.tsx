@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Tool, Shape, Point, ShapeStyle, TextShape } from "@/types/canvas";
-import { drawShape, getShapeAtPoint } from "@/utils/canvasUtils";
+import { drawShape, getShapeAtPoint, getResizeHandle } from "@/utils/canvasUtils";
 import { TextEditor } from "./TextEditor";
 import { EraserPanel } from "./EraserPanel";
 
@@ -39,6 +39,8 @@ export const Canvas = ({
   const [isPanning, setIsPanning] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeHandle, setResizeHandle] = useState<string | null>(null);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [drawStart, setDrawStart] = useState<Point | null>(null);
@@ -47,6 +49,7 @@ export const Canvas = ({
   const [penPoints, setPenPoints] = useState<Point[]>([]);
   const [editingText, setEditingText] = useState<TextShape | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [resizeStartBounds, setResizeStartBounds] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
   // Get canvas coordinates from mouse event
   const getCanvasPoint = useCallback((e: React.MouseEvent<HTMLCanvasElement>): Point => {
@@ -124,7 +127,20 @@ export const Canvas = ({
     // Selection tool
     if (activeTool === "select") {
       const clickedShape = getShapeAtPoint(point, shapes);
-      if (clickedShape) {
+      if (clickedShape && selectedIds.includes(clickedShape.id)) {
+        // Check if clicking on resize handle
+        const handle = getResizeHandle(point, clickedShape);
+        if (handle) {
+          setIsResizing(true);
+          setResizeHandle(handle);
+          setResizeStartBounds({ x: clickedShape.x, y: clickedShape.y, width: clickedShape.width, height: clickedShape.height });
+          setDragStart(point);
+          return;
+        }
+        // Start dragging
+        setIsDragging(true);
+        setDragStart(point);
+      } else if (clickedShape) {
         onSelectShape(clickedShape.id, e.shiftKey);
         setIsDragging(true);
         setDragStart(point);
@@ -183,6 +199,41 @@ export const Canvas = ({
       return;
     }
 
+    // Resizing selected shape
+    if (isResizing && dragStart && resizeStartBounds && resizeHandle && selectedIds.length === 1) {
+      const dx = point.x - dragStart.x;
+      const dy = point.y - dragStart.y;
+      const shape = shapes.find(s => s.id === selectedIds[0]);
+      
+      if (shape) {
+        let newX = resizeStartBounds.x;
+        let newY = resizeStartBounds.y;
+        let newWidth = resizeStartBounds.width;
+        let newHeight = resizeStartBounds.height;
+
+        // Handle different resize directions
+        if (resizeHandle.includes("e")) {
+          newWidth = Math.max(20, resizeStartBounds.width + dx);
+        }
+        if (resizeHandle.includes("w")) {
+          newWidth = Math.max(20, resizeStartBounds.width - dx);
+          newX = resizeStartBounds.x + dx;
+          if (newWidth === 20) newX = resizeStartBounds.x + resizeStartBounds.width - 20;
+        }
+        if (resizeHandle.includes("s")) {
+          newHeight = Math.max(20, resizeStartBounds.height + dy);
+        }
+        if (resizeHandle.includes("n")) {
+          newHeight = Math.max(20, resizeStartBounds.height - dy);
+          newY = resizeStartBounds.y + dy;
+          if (newHeight === 20) newY = resizeStartBounds.y + resizeStartBounds.height - 20;
+        }
+
+        onUpdateShape(shape.id, { x: newX, y: newY, width: newWidth, height: newHeight });
+      }
+      return;
+    }
+
     // Dragging selected shapes
     if (isDragging && dragStart) {
       const dx = point.x - dragStart.x;
@@ -221,6 +272,15 @@ export const Canvas = ({
     // End panning
     if (isPanning) {
       setIsPanning(false);
+      return;
+    }
+
+    // End resizing
+    if (isResizing) {
+      setIsResizing(false);
+      setResizeHandle(null);
+      setResizeStartBounds(null);
+      setDragStart(null);
       return;
     }
 
@@ -304,6 +364,12 @@ export const Canvas = ({
 
   const getCursor = () => {
     if (activeTool === "hand" || isPanning) return "cursor-grab active:cursor-grabbing";
+    if (isResizing) {
+      if (resizeHandle === "nw" || resizeHandle === "se") return "cursor-nwse-resize";
+      if (resizeHandle === "ne" || resizeHandle === "sw") return "cursor-nesw-resize";
+      if (resizeHandle === "n" || resizeHandle === "s") return "cursor-ns-resize";
+      if (resizeHandle === "e" || resizeHandle === "w") return "cursor-ew-resize";
+    }
     if (activeTool === "select") return "cursor-default";
     if (activeTool === "text") return "cursor-text";
     if (activeTool === "eraser") return "cursor-not-allowed";

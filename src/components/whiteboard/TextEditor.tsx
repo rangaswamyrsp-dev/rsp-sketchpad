@@ -23,10 +23,8 @@ export const TextEditor = ({ shape, zoom, offset, onComplete, onCancel }: TextEd
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
       onCancel();
-    } else if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      onComplete(text);
     }
+    // Enter works without shift - just adds new line naturally
   };
 
   const handleBlur = () => {
@@ -48,7 +46,7 @@ export const TextEditor = ({ shape, zoom, offset, onComplete, onCancel }: TextEd
       onChange={(e) => setText(e.target.value)}
       onKeyDown={handleKeyDown}
       onBlur={handleBlur}
-      className="absolute border-2 border-primary bg-background text-foreground resize-none outline-none"
+      className="absolute bg-transparent resize-none outline-none border-none"
       style={{
         left: `${left}px`,
         top: `${top}px`,
