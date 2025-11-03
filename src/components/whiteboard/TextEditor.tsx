@@ -14,9 +14,13 @@ export const TextEditor = ({ shape, zoom, offset, onComplete, onCancel }: TextEd
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.focus();
-      textareaRef.current.select();
+    const el = textareaRef.current;
+    if (el) {
+      // Delay focus to ensure element is mounted and visible
+      requestAnimationFrame(() => {
+        el.focus();
+        el.select();
+      });
     }
   }, []);
 
@@ -47,6 +51,8 @@ export const TextEditor = ({ shape, zoom, offset, onComplete, onCancel }: TextEd
       onChange={(e) => setText(e.target.value)}
       onKeyDown={handleKeyDown}
       onBlur={handleBlur}
+      onMouseDown={(e) => e.stopPropagation()}
+      autoFocus
       className="absolute bg-transparent resize-none outline-none border-none"
       style={{
         left: `${left}px`,
