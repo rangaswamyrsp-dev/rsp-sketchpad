@@ -167,6 +167,7 @@ export const Canvas = ({
     if (activeTool === "text") {
       const textShape = onCreateShape("text", point, { x: point.x + 200, y: point.y + 30 }, currentStyle);
       if (textShape && "text" in textShape) {
+        onAddShape(textShape);
         setEditingText(textShape as TextShape);
       }
     }

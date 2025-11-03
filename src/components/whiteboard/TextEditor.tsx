@@ -22,9 +22,10 @@ export const TextEditor = ({ shape, zoom, offset, onComplete, onCancel }: TextEd
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
+      e.preventDefault();
       onCancel();
     }
-    // Enter works without shift - just adds new line naturally
+    // Enter key adds new line - don't prevent default
   };
 
   const handleBlur = () => {

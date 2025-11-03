@@ -55,6 +55,11 @@ const Whiteboard = () => {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't interfere with text editing
+      if ((e.target as HTMLElement).tagName === 'TEXTAREA') {
+        return;
+      }
+
       // Undo/Redo
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
         e.preventDefault();
@@ -80,16 +85,20 @@ const Whiteboard = () => {
         setActiveTool("select");
       }
 
-      // Tool shortcuts
+      // Number-based tool shortcuts
+      if (e.key === "1") setActiveTool("hand");
+      if (e.key === "2") setActiveTool("rectangle");
+      if (e.key === "3") setActiveTool("ellipse");
+      if (e.key === "4") setActiveTool("diamond");
+      if (e.key === "5") setActiveTool("arrow");
+      if (e.key === "6") setActiveTool("line");
+      if (e.key === "7") setActiveTool("pen");
+      if (e.key === "8") setActiveTool("text");
+      if (e.key === "9") setActiveTool("image");
+      if (e.key === "0") setActiveTool("eraser");
+      
+      // V for select (keep this one)
       if (e.key === "v") setActiveTool("select");
-      if (e.key === "h") setActiveTool("hand");
-      if (e.key === "r") setActiveTool("rectangle");
-      if (e.key === "o") setActiveTool("ellipse");
-      if (e.key === "d") setActiveTool("diamond");
-      if (e.key === "l") setActiveTool("line");
-      if (e.key === "a") setActiveTool("arrow");
-      if (e.key === "t") setActiveTool("text");
-      if (e.key === "p") setActiveTool("pen");
 
       // Arrow keys to move selected
       if (selectedIds.length > 0) {
