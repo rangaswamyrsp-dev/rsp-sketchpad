@@ -55,10 +55,13 @@ const Whiteboard = () => {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't interfere with text editing
-      if ((e.target as HTMLElement).tagName === 'TEXTAREA') {
-        return;
-      }
+      const target = e.target as HTMLElement;
+      const isEditable =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'SELECT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable;
+      if (isEditable) return;
 
       // Undo/Redo
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
@@ -85,17 +88,51 @@ const Whiteboard = () => {
         setActiveTool("select");
       }
 
-      // Number-based tool shortcuts
-      if (e.key === "1") setActiveTool("hand");
-      if (e.key === "2") setActiveTool("rectangle");
-      if (e.key === "3") setActiveTool("ellipse");
-      if (e.key === "4") setActiveTool("diamond");
-      if (e.key === "5") setActiveTool("arrow");
-      if (e.key === "6") setActiveTool("line");
-      if (e.key === "7") setActiveTool("pen");
-      if (e.key === "8") setActiveTool("text");
-      if (e.key === "9") setActiveTool("image");
-      if (e.key === "0") setActiveTool("eraser");
+      // Number-based tool shortcuts (support top row + numpad)
+      switch (e.code) {
+        case 'Digit1':
+        case 'Numpad1':
+          setActiveTool('hand');
+          break;
+        case 'Digit2':
+        case 'Numpad2':
+          setActiveTool('rectangle');
+          break;
+        case 'Digit3':
+        case 'Numpad3':
+          setActiveTool('ellipse');
+          break;
+        case 'Digit4':
+        case 'Numpad4':
+          setActiveTool('diamond');
+          break;
+        case 'Digit5':
+        case 'Numpad5':
+          setActiveTool('arrow');
+          break;
+        case 'Digit6':
+        case 'Numpad6':
+          setActiveTool('line');
+          break;
+        case 'Digit7':
+        case 'Numpad7':
+          setActiveTool('pen');
+          break;
+        case 'Digit8':
+        case 'Numpad8':
+          setActiveTool('text');
+          break;
+        case 'Digit9':
+        case 'Numpad9':
+          setActiveTool('image');
+          break;
+        case 'Digit0':
+        case 'Numpad0':
+          setActiveTool('eraser');
+          break;
+        default:
+          break;
+      }
       
       // V for select (keep this one)
       if (e.key === "v") setActiveTool("select");
@@ -124,6 +161,7 @@ const Whiteboard = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo, redo, deleteSelected, selectedIds, clearSelection, moveSelected]);
+
 
   const handleZoomIn = useCallback(() => {
     setZoom((prev) => Math.min(prev + 10, 300));

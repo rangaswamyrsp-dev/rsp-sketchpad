@@ -59,6 +59,7 @@ export const TextEditor = ({ shape, zoom, offset, onComplete, onCancel }: TextEd
         color: shape.style.strokeColor,
         padding: "2px 4px",
         lineHeight: 1.2,
+        zIndex: 50,
       }}
     />
   );

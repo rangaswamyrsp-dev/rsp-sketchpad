@@ -167,7 +167,6 @@ export const Canvas = ({
     if (activeTool === "text") {
       const textShape = onCreateShape("text", point, { x: point.x + 200, y: point.y + 30 }, currentStyle);
       if (textShape && "text" in textShape) {
-        onAddShape(textShape);
         setEditingText(textShape as TextShape);
       }
     }
@@ -386,6 +385,11 @@ export const Canvas = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onWheel={(e) => {
+          // Two-finger trackpad scroll pans the canvas
+          e.preventDefault();
+          setOffset((prev) => ({ x: prev.x - e.deltaX, y: prev.y - e.deltaY }));
+        }}
       />
       
       {/* Hidden file input for image upload */}
