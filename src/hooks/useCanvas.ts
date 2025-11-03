@@ -96,8 +96,8 @@ export const useCanvas = (initialStyle: ShapeStyle) => {
           ...baseShape,
           type: "text",
           text: "",
-          fontSize: 16,
-          fontFamily: "Arial",
+          fontSize: 24,
+          fontFamily: "Inter, system-ui, Arial, sans-serif",
           textAlign: "left",
         };
       case "pen":

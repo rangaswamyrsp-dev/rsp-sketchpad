@@ -54,6 +54,8 @@ export const TextEditor = ({ shape, zoom, offset, onComplete, onCancel }: TextEd
       onMouseDown={(e) => e.stopPropagation()}
       autoFocus
       className="absolute bg-transparent resize-none outline-none border-none"
+      placeholder="Type text..."
+      spellCheck={false}
       style={{
         left: `${left}px`,
         top: `${top}px`,
@@ -62,9 +64,10 @@ export const TextEditor = ({ shape, zoom, offset, onComplete, onCancel }: TextEd
         fontSize: `${shape.fontSize * scale}px`,
         fontFamily: shape.fontFamily,
         textAlign: shape.textAlign,
-        color: shape.style.strokeColor,
+        color: shape.style?.strokeColor && shape.style.strokeColor !== "transparent" ? shape.style.strokeColor : "hsl(var(--foreground))",
         padding: "2px 4px",
         lineHeight: 1.2,
+        whiteSpace: "pre-wrap",
         zIndex: 50,
       }}
     />
