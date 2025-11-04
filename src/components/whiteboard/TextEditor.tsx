@@ -28,8 +28,17 @@ export const TextEditor = ({ shape, zoom, offset, onComplete, onCancel }: TextEd
     if (e.key === "Escape") {
       e.preventDefault();
       onCancel();
+      return;
     }
-    // Enter key adds new line - don't prevent default
+    // Enter commits text, Shift+Enter inserts newline
+    if (e.key === "Enter" && !e.shiftKey && !e.altKey) {
+      e.preventDefault();
+      if (text.trim()) {
+        onComplete(text);
+      } else {
+        onCancel();
+      }
+    }
   };
 
   const handleBlur = () => {
