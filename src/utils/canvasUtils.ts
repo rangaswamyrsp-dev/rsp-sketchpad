@@ -106,10 +106,29 @@ export const drawShape = (
 
     case "text":
       if ("text" in shape) {
+        // Ensure readable text rendering
         ctx.font = `${shape.fontSize}px ${shape.fontFamily}`;
-        ctx.textAlign = shape.textAlign;
-        ctx.fillStyle = shape.style.strokeColor;
-        ctx.fillText(shape.text, shape.x, shape.y + shape.fontSize);
+        ctx.textBaseline = "top";
+        ctx.textAlign = shape.textAlign as CanvasTextAlign;
+
+        // Fallback color if strokeColor is transparent/invalid
+        const color = shape.style.strokeColor && shape.style.strokeColor !== "transparent"
+          ? shape.style.strokeColor
+          : "#1e1e1e";
+        ctx.fillStyle = color;
+
+        // Support multi-line text (Shift+Enter)
+        const lines = String(shape.text || "").split(/\r?\n/);
+        const lineHeight = Math.round(shape.fontSize * 1.2);
+
+        // Compute x based on alignment within the shape bounds
+        let x = shape.x;
+        if (shape.textAlign === "center") x = shape.x + shape.width / 2;
+        if (shape.textAlign === "right") x = shape.x + shape.width;
+
+        lines.forEach((line, i) => {
+          ctx.fillText(line, x, shape.y + i * lineHeight);
+        });
       }
       break;
 
