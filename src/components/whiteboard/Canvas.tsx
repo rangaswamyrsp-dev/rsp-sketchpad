@@ -17,6 +17,7 @@ interface CanvasProps {
   onMoveSelected: (dx: number, dy: number) => void;
   onUpdateShape: (id: string, updates: Partial<Shape>) => void;
   onCreateShape: (type: Tool, start: Point, end: Point, style: ShapeStyle) => Shape | null;
+  onDeleteShape: (id: string) => void;
   onEraserSizeChange: (size: number) => void;
   onTextToolClick?: (position: { x: number; y: number }) => void;
 }
@@ -34,6 +35,7 @@ export const Canvas = ({
   onMoveSelected,
   onUpdateShape,
   onCreateShape,
+  onDeleteShape,
   onEraserSizeChange,
   onTextToolClick,
 }: CanvasProps) => {
@@ -176,12 +178,12 @@ export const Canvas = ({
       fileInputRef.current?.click();
     }
 
-    // Eraser tool
+    // Eraser tool - delete shapes on click
     if (activeTool === "eraser") {
       setIsDrawing(true);
       const clickedShape = getShapeAtPoint(point, shapes);
       if (clickedShape) {
-        onUpdateShape(clickedShape.id, { width: 0, height: 0 } as any);
+        onDeleteShape(clickedShape.id);
       }
     }
   };
@@ -258,11 +260,11 @@ export const Canvas = ({
       }
     }
 
-    // Eraser tool - continuous erasing
+    // Eraser tool - continuous erasing while dragging
     if (activeTool === "eraser" && isDrawing && !isPanning) {
       const clickedShape = getShapeAtPoint(point, shapes);
       if (clickedShape) {
-        onUpdateShape(clickedShape.id, { width: 0, height: 0 } as any);
+        onDeleteShape(clickedShape.id);
       }
     }
   };

@@ -44,6 +44,7 @@ const Whiteboard = () => {
     addShape,
     updateShape,
     deleteSelected,
+    deleteShape,
     selectShape,
     clearSelection,
     moveSelected,
@@ -89,6 +90,13 @@ const Whiteboard = () => {
       if (e.key === "Escape") {
         clearSelection();
         setActiveTool("select");
+      }
+
+      // Ctrl+1 for Select tool
+      if ((e.ctrlKey || e.metaKey) && (e.code === 'Digit1' || e.code === 'Numpad1')) {
+        e.preventDefault();
+        setActiveTool('select');
+        return;
       }
 
       // Number-based tool shortcuts (support top row + numpad)
@@ -381,6 +389,7 @@ const Whiteboard = () => {
           onMoveSelected={moveSelected}
           onUpdateShape={updateShape}
           onCreateShape={createShape}
+          onDeleteShape={deleteShape}
           onEraserSizeChange={setEraserSize}
           onTextToolClick={handleTextToolClick}
         />

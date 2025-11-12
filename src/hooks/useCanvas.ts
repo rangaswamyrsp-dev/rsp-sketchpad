@@ -142,6 +142,12 @@ export const useCanvas = (initialStyle: ShapeStyle) => {
     addToHistory(newShapes);
   }, [shapes, selectedIds, addToHistory]);
 
+  const deleteShape = useCallback((id: string) => {
+    const newShapes = shapes.filter(shape => shape.id !== id);
+    setShapes(newShapes);
+    addToHistory(newShapes);
+  }, [shapes, addToHistory]);
+
   const selectShape = useCallback((id: string, multi: boolean = false) => {
     if (multi) {
       setSelectedIds(prev => 
@@ -185,6 +191,7 @@ export const useCanvas = (initialStyle: ShapeStyle) => {
     addShape,
     updateShape,
     deleteSelected,
+    deleteShape,
     selectShape,
     clearSelection,
     moveSelected,
