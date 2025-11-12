@@ -35,6 +35,7 @@ const Whiteboard = () => {
     opacity: 1,
   });
   const [showTextDialog, setShowTextDialog] = useState(false);
+  const [textClickPosition, setTextClickPosition] = useState<{ x: number; y: number } | null>(null);
 
   const {
     shapes,
@@ -175,12 +176,10 @@ const Whiteboard = () => {
     setZoom(100);
   }, []);
 
-  // Open text dialog when Text tool is selected
-  useEffect(() => {
-    if (activeTool === "text") {
-      setShowTextDialog(true);
-    }
-  }, [activeTool]);
+  const handleTextToolClick = useCallback((position: { x: number; y: number }) => {
+    setTextClickPosition(position);
+    setShowTextDialog(true);
+  }, []);
 
   const handleAddText = useCallback((value: string) => {
     const lines = value.split(/\r?\n/);
@@ -189,13 +188,14 @@ const Whiteboard = () => {
     const width = 300;
     const height = Math.max(lineHeight, lines.length * lineHeight);
 
-    // Place roughly near the working area
-    const x = 200;
-    const y = 150;
+    // Use click position or default fallback
+    const x = textClickPosition?.x ?? 200;
+    const y = textClickPosition?.y ?? 150;
 
     const base = createShape("text", { x, y }, { x: x + width, y: y + height }, shapeStyle);
     if (!base || base.type !== "text") {
       setShowTextDialog(false);
+      setTextClickPosition(null);
       setActiveTool("select");
       return;
     }
@@ -205,8 +205,9 @@ const Whiteboard = () => {
     selectShape(newShape.id);
     setActiveTool("select");
     setShowTextDialog(false);
+    setTextClickPosition(null);
     toast.success("Text added");
-  }, [createShape, shapeStyle, addShape, selectShape]);
+  }, [createShape, shapeStyle, addShape, selectShape, textClickPosition]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -381,6 +382,7 @@ const Whiteboard = () => {
           onUpdateShape={updateShape}
           onCreateShape={createShape}
           onEraserSizeChange={setEraserSize}
+          onTextToolClick={handleTextToolClick}
         />
 
         <ZoomControls

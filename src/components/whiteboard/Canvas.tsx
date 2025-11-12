@@ -18,6 +18,7 @@ interface CanvasProps {
   onUpdateShape: (id: string, updates: Partial<Shape>) => void;
   onCreateShape: (type: Tool, start: Point, end: Point, style: ShapeStyle) => Shape | null;
   onEraserSizeChange: (size: number) => void;
+  onTextToolClick?: (position: { x: number; y: number }) => void;
 }
 
 export const Canvas = ({
@@ -34,6 +35,7 @@ export const Canvas = ({
   onUpdateShape,
   onCreateShape,
   onEraserSizeChange,
+  onTextToolClick,
 }: CanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPanning, setIsPanning] = useState(false);
@@ -163,12 +165,9 @@ export const Canvas = ({
       setPenPoints([point]);
     }
 
-    // Text tool - create text and start editing
+    // Text tool - trigger dialog with click position
     if (activeTool === "text") {
-      const textShape = onCreateShape("text", point, { x: point.x + 200, y: point.y + 30 }, currentStyle);
-      if (textShape && "text" in textShape) {
-        setEditingText(textShape as TextShape);
-      }
+      onTextToolClick?.(point);
     }
 
     // Image tool - trigger file input
