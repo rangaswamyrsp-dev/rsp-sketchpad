@@ -4,11 +4,10 @@ import { Canvas } from "@/components/whiteboard/Canvas";
 import { MenuSidebar } from "@/components/whiteboard/MenuSidebar";
 import { PropertiesPanel } from "@/components/whiteboard/PropertiesPanel";
 import { ZoomControls } from "@/components/whiteboard/ZoomControls";
-import { TextInputDialog } from "@/components/whiteboard/TextInputDialog";
 import { useCanvas } from "@/hooks/useCanvas";
 import { Tool, ShapeStyle } from "@/types/canvas";
 import { toast } from "sonner";
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -34,8 +33,6 @@ const Whiteboard = () => {
     roundEdges: false,
     opacity: 1,
   });
-  const [showTextDialog, setShowTextDialog] = useState(false);
-  const [textClickPosition, setTextClickPosition] = useState<{ x: number; y: number } | null>(null);
 
   const {
     shapes,
@@ -183,39 +180,6 @@ const Whiteboard = () => {
   const handleResetZoom = useCallback(() => {
     setZoom(100);
   }, []);
-
-  const handleTextToolClick = useCallback((position: { x: number; y: number }) => {
-    setTextClickPosition(position);
-    setShowTextDialog(true);
-  }, []);
-
-  const handleAddText = useCallback((value: string) => {
-    const lines = value.split(/\r?\n/);
-    const fontSize = 24;
-    const lineHeight = Math.round(fontSize * 1.2);
-    const width = 300;
-    const height = Math.max(lineHeight, lines.length * lineHeight);
-
-    // Use click position or default fallback
-    const x = textClickPosition?.x ?? 200;
-    const y = textClickPosition?.y ?? 150;
-
-    const base = createShape("text", { x, y }, { x: x + width, y: y + height }, shapeStyle);
-    if (!base || base.type !== "text") {
-      setShowTextDialog(false);
-      setTextClickPosition(null);
-      setActiveTool("select");
-      return;
-    }
-
-    const newShape = { ...base, text: value, width, height };
-    addShape(newShape);
-    selectShape(newShape.id);
-    setActiveTool("select");
-    setShowTextDialog(false);
-    setTextClickPosition(null);
-    toast.success("Text added");
-  }, [createShape, shapeStyle, addShape, selectShape, textClickPosition]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -391,7 +355,7 @@ const Whiteboard = () => {
           onCreateShape={createShape}
           onDeleteShape={deleteShape}
           onEraserSizeChange={setEraserSize}
-          onTextToolClick={handleTextToolClick}
+          onSetTool={setActiveTool}
         />
 
         <ZoomControls
@@ -401,17 +365,6 @@ const Whiteboard = () => {
           onResetZoom={handleResetZoom}
         />
       </div>
-
-      <TextInputDialog
-        open={showTextDialog}
-        onOpenChange={(open) => {
-          setShowTextDialog(open);
-          if (!open && activeTool === "text") {
-            setActiveTool("select");
-          }
-        }}
-        onSubmit={handleAddText}
-      />
 
       {/* Reset canvas confirmation dialog */}
       <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>

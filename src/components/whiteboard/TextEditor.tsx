@@ -54,31 +54,39 @@ export const TextEditor = ({ shape, zoom, offset, onComplete, onCancel }: TextEd
   const top = shape.y * scale + offset.y;
 
   return (
-    <textarea
-      ref={textareaRef}
-      value={text}
-      onChange={(e) => setText(e.target.value)}
-      onKeyDown={handleKeyDown}
-      onBlur={handleBlur}
-      onMouseDown={(e) => e.stopPropagation()}
-      autoFocus
-      className="absolute bg-transparent resize-none outline-none border-none"
-      placeholder="Type text..."
-      spellCheck={false}
+    <div
+      className="absolute"
       style={{
         left: `${left}px`,
         top: `${top}px`,
-        width: `${Math.max(shape.width * scale, 100)}px`,
-        minHeight: `${shape.fontSize * scale}px`,
-        fontSize: `${shape.fontSize * scale}px`,
-        fontFamily: shape.fontFamily,
-        textAlign: shape.textAlign,
-        color: shape.style?.strokeColor && shape.style.strokeColor !== "transparent" ? shape.style.strokeColor : "hsl(var(--foreground))",
-        padding: "2px 4px",
-        lineHeight: 1.2,
-        whiteSpace: "pre-wrap",
         zIndex: 50,
       }}
-    />
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      <textarea
+        ref={textareaRef}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onBlur={handleBlur}
+        autoFocus
+        className="bg-background resize-both outline-none"
+        placeholder="Type text..."
+        spellCheck={false}
+        style={{
+          width: `${Math.max(shape.width * scale, 150)}px`,
+          minHeight: `${Math.max(shape.fontSize * scale + 16, 40)}px`,
+          fontSize: `${shape.fontSize * scale}px`,
+          fontFamily: shape.fontFamily,
+          textAlign: shape.textAlign,
+          color: shape.style?.strokeColor && shape.style.strokeColor !== "transparent" ? shape.style.strokeColor : "hsl(var(--foreground))",
+          padding: "8px",
+          lineHeight: 1.2,
+          whiteSpace: "pre-wrap",
+          border: "2px solid hsl(var(--primary))",
+          borderRadius: "4px",
+        }}
+      />
+    </div>
   );
 };
