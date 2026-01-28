@@ -19,7 +19,7 @@ interface CanvasProps {
   onCreateShape: (type: Tool, start: Point, end: Point, style: ShapeStyle) => Shape | null;
   onDeleteShape: (id: string) => void;
   onEraserSizeChange: (size: number) => void;
-  onTextToolClick?: (position: { x: number; y: number }) => void;
+  onSetTool?: (tool: Tool) => void;
 }
 
 export const Canvas = ({
@@ -37,7 +37,7 @@ export const Canvas = ({
   onCreateShape,
   onDeleteShape,
   onEraserSizeChange,
-  onTextToolClick,
+  onSetTool,
 }: CanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPanning, setIsPanning] = useState(false);
@@ -167,9 +167,23 @@ export const Canvas = ({
       setPenPoints([point]);
     }
 
-    // Text tool - trigger dialog with click position
+    // Text tool - create inline text editor at click position
     if (activeTool === "text") {
-      onTextToolClick?.(point);
+      const textShape: TextShape = {
+        id: `text-${Date.now()}`,
+        type: "text",
+        x: point.x,
+        y: point.y,
+        width: 200,
+        height: 30,
+        text: "",
+        fontSize: 24,
+        fontFamily: "Inter, system-ui, Arial, sans-serif",
+        textAlign: "left",
+        style: currentStyle,
+        rotation: 0,
+      };
+      setEditingText(textShape);
     }
 
     // Image tool - trigger file input
@@ -354,13 +368,17 @@ export const Canvas = ({
 
   const handleTextComplete = (text: string) => {
     if (editingText && text.trim()) {
-      onAddShape({ ...editingText, text });
+      const finalShape = { ...editingText, text };
+      onAddShape(finalShape);
+      onSelectShape(finalShape.id, false);
+      onSetTool?.("select");
     }
     setEditingText(null);
   };
 
   const handleTextCancel = () => {
     setEditingText(null);
+    onSetTool?.("select");
   };
 
   const getCursor = () => {
