@@ -11,16 +11,19 @@ interface TextEditorProps {
 
 export const TextEditor = ({ shape, zoom, offset, onComplete, onCancel }: TextEditorProps) => {
   const [text, setText] = useState(shape.text);
+  const [isReady, setIsReady] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const el = textareaRef.current;
     if (el) {
-      // Delay focus to ensure element is mounted and visible
-      requestAnimationFrame(() => {
+      // Delay focus and enable blur handling after focus is stable
+      const timer = setTimeout(() => {
         el.focus();
         el.select();
-      });
+        setIsReady(true);
+      }, 50);
+      return () => clearTimeout(timer);
     }
   }, []);
 
@@ -42,6 +45,8 @@ export const TextEditor = ({ shape, zoom, offset, onComplete, onCancel }: TextEd
   };
 
   const handleBlur = () => {
+    // Only handle blur after the component is ready (focused)
+    if (!isReady) return;
     if (text.trim()) {
       onComplete(text);
     } else {
